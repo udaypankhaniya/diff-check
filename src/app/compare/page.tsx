@@ -1,114 +1,358 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
-import DiffSummaryBar from "@/components/DiffSummaryBar";
-import FileTreeView, { FileStatus } from "@/components/FileTreeView";
-import DiffDetailsPanel from "@/components/DiffDetailsPanel";
-import { useRouter } from "next/navigation";
-import { Tooltip } from "@/components/Tooltip";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import FileUploadZone from "@/components/modern/FileUploadZone";
+import LoadingSpinner from "@/components/modern/LoadingSpinner";
+import FileTreeSidebar from "@/components/diff/FileTreeSidebar";
+import DiffSplitViewer from "@/components/diff/DiffSplitViewer";
+import { useAppSelector, useAppDispatch } from "@/hooks/redux";
+import { useApp } from "@/context/AppContext";
+import { setUploadedFile, processZipFiles, reset as resetZip } from "@/store/zipSlice";
+import { generateDiff, reset as resetDiff } from "@/store/diffSlice";
+import { Button } from "@/components/ui/button";
+import { ArrowPathIcon, SparklesIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { Squares2X2Icon as CompareIcon } from "@heroicons/react/24/outline";
+import { diffHistoryService } from "@/services/diffHistory";
 
-interface DiffResult {
-  added: string[];
-  removed: string[];
-  modified: string[];
-  unchanged: string[];
-  diffs: Record<string, string>;
-}
+export default function ComparePage() {
+    const dispatch = useAppDispatch();
+    const { addToast } = useApp();
+    const [processingStartTime, setProcessingStartTime] = useState<number | null>(null);
 
-const ComparePage = () => {
-  const [diff, setDiff] = useState<DiffResult | null>(null);
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const router = useRouter();
-
-  useEffect(() => {
-    const data = localStorage.getItem("zipDiffResult");
-    if (data) {
-      setDiff(JSON.parse(data));
-    }
-  }, []);
-
-  if (!diff) {
-    return (
-      <div className="text-center text-gray-400 mt-20">
-        No diff data found. Please upload ZIPs on the home page.
-      </div>
+    const { files, uploadedFiles, loading: zipLoading, progress, error: zipError } = useAppSelector(
+        (state) => state.zip
     );
-  }
+    const { result, loading: diffLoading, error: diffError } = useAppSelector(
+        (state) => state.diff
+    );
 
-  // For now, just show lists. Later, use a real tree structure.
-  const allFiles = [
-    ...diff.added.map((f) => ({ path: f, status: "added" as FileStatus })),
-    ...diff.removed.map((f) => ({ path: f, status: "removed" as FileStatus })),
-    ...diff.modified.map((f) => ({
-      path: f,
-      status: "modified" as FileStatus,
-    })),
-    ...diff.unchanged.map((f) => ({
-      path: f,
-      status: "unchanged" as FileStatus,
-    })),
-  ];
-  console.log(allFiles);
+    // Auto-generate diff when both ZIP files are processed
+    useEffect(() => {
+        if (files.zip1 && files.zip2 && !result) {
+            setProcessingStartTime(Date.now());
+            dispatch(generateDiff({ zip1: files.zip1, zip2: files.zip2 }));
+        }
+    }, [files.zip1, files.zip2, result, dispatch]);
 
-  return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors">
-      <div className="w-full max-w-6xl p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md mt-12 relative">
-        <button
-          className="absolute top-4 right-4 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1 rounded shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-          onClick={() => {
-            localStorage.removeItem("zipDiffResult");
-            router.push("/");
-          }}
-        >
-          Clear
-        </button>
-        <h1 className="text-2xl font-bold mb-6 text-center text-gray-900 dark:text-gray-100 tracking-tight">
-          Compare ZIP Files
-        </h1>
-        <div className="mb-8">
-          <DiffSummaryBar
-            added={diff.added.length}
-            removed={diff.removed.length}
-            modified={diff.modified.length}
-          />
-        </div>
-        <div className="flex flex-col md:flex-row gap-10">
-          <section className="flex-1">
-            <h2 className="font-semibold mb-3 text-gray-700 dark:text-gray-200 text-lg flex items-center gap-2">
-              Files
-              <Tooltip content="Click a file to view its diff. Folders can be expanded/collapsed.">
-                <span className="text-gray-400 cursor-help">?</span>
-              </Tooltip>
-            </h2>
-            <div className="bg-gray-50 dark:bg-gray-900 border rounded p-4 min-h-[200px] max-h-[400px] overflow-auto shadow-inner">
-              <FileTreeView
-                files={allFiles}
-                onSelect={setSelectedFile}
-                selected={selectedFile}
-              />
+    // Save to history when diff generation completes
+    useEffect(() => {
+        if (result && uploadedFiles.zip1 && uploadedFiles.zip2 && processingStartTime) {
+            const duration = Date.now() - processingStartTime;
+
+            try {
+                const historyId = diffHistoryService.saveDiffToHistory(
+                    result,
+                    uploadedFiles.zip1,
+                    uploadedFiles.zip2,
+                    { duration }
+                );
+
+                addToast({
+                    type: 'success',
+                    message: 'Comparison saved to history',
+                    duration: 3000,
+                });
+            } catch (error) {
+                console.error('Failed to save to history:', error);
+                // Don't show error toast for history saving - it's not critical
+            }
+
+            setProcessingStartTime(null);
+        }
+    }, [result, uploadedFiles.zip1, uploadedFiles.zip2, processingStartTime, addToast]);
+
+    // Handle errors
+    useEffect(() => {
+        if (zipError) {
+            addToast({ type: 'error', message: zipError });
+        }
+        if (diffError) {
+            addToast({ type: 'error', message: diffError });
+        }
+    }, [zipError, diffError, addToast]);
+
+    const handleCompare = async () => {
+        if (!uploadedFiles.zip1 || !uploadedFiles.zip2) {
+            addToast({ type: 'error', message: 'Please upload both ZIP files.' });
+            return;
+        }
+
+        try {
+            addToast({ type: 'info', message: 'Processing ZIP files...' });
+            await dispatch(
+                processZipFiles({ 
+                    zip1: uploadedFiles.zip1, 
+                    zip2: uploadedFiles.zip2 
+                })
+            ).unwrap();
+            
+            addToast({ 
+                type: 'success', 
+                message: 'ZIP files processed successfully!' 
+            });
+        } catch (error) {
+            addToast({ 
+                type: 'error', 
+                message: error instanceof Error ? error.message : 'Failed to process ZIP files' 
+            });
+        }
+    };
+
+    const handleFileSelect = (key: 'zip1' | 'zip2') => (file: File | null) => {
+        dispatch(setUploadedFile({ key, file }));
+    };
+
+    const handleReset = () => {
+        dispatch(resetZip());
+        dispatch(resetDiff());
+        addToast({ type: 'info', message: 'Reset complete' });
+    };
+
+    const isLoading = zipLoading || diffLoading;
+    const canCompare = uploadedFiles.zip1 && uploadedFiles.zip2 && !isLoading;
+    const hasResult = result && files.zip1 && files.zip2;
+
+    if (hasResult) {
+        return (
+            <div className="h-screen flex flex-col bg-background">
+                {/* Header */}
+                <motion.div 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center justify-between p-6 glass-effect border-b z-10"
+                >
+                    <div className="flex items-center space-x-6">
+                        <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                            className="flex items-center space-x-3"
+                        >
+                            <div className="p-2 rounded-lg bg-primary/10">
+                                <CompareIcon className="w-6 h-6 text-primary" />
+                            </div>
+                            <h1 className="text-2xl font-bold text-foreground">
+                                Comparison Results
+                            </h1>
+                        </motion.div>
+                        <div className="hidden md:flex items-center space-x-3 text-sm">
+                            <div className="px-3 py-1 rounded-full bg-muted text-muted-foreground">
+                                {uploadedFiles.zip1?.name}
+                            </div>
+                            <span className="text-muted-foreground">vs</span>
+                            <div className="px-3 py-1 rounded-full bg-muted text-muted-foreground">
+                                {uploadedFiles.zip2?.name}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                        >
+                            <Link href="/diff-history">
+                                <Button
+                                    variant="ghost"
+                                    className="flex items-center gap-2"
+                                >
+                                    <ClockIcon className="w-4 h-4" />
+                                    History
+                                </Button>
+                            </Link>
+                        </motion.div>
+                        <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                        >
+                            <Button
+                                onClick={handleReset}
+                                variant="outline"
+                                className="flex items-center gap-2 btn-secondary"
+                            >
+                                <ArrowPathIcon className="w-4 h-4" />
+                                New Comparison
+                            </Button>
+                        </motion.div>
+                    </div>
+                </motion.div>
+
+                {/* Main Content */}
+                <div className="flex-1 flex overflow-hidden">
+                    <FileTreeSidebar />
+                    <DiffSplitViewer />
+                </div>
             </div>
-          </section>
-          <div className="w-px bg-gray-200 dark:bg-gray-700 mx-2 hidden md:block" />
-          <section className="flex-1">
-            <h2 className="font-semibold mb-3 text-gray-700 dark:text-gray-200 text-lg flex items-center gap-2">
-              Diff Details
-              <Tooltip content="Shows the unified diff for the selected file.">
-                <span className="text-gray-400 cursor-help">?</span>
-              </Tooltip>
-            </h2>
-            <div className="bg-gray-100 dark:bg-gray-700 rounded p-4 min-h-[120px] max-h-[400px] overflow-auto shadow-inner">
-              <DiffDetailsPanel
-                diff={
-                  selectedFile && diff.diffs[selectedFile]
-                    ? diff.diffs[selectedFile]
-                    : "Select a file to view diff."
-                }
-              />
-            </div>
-          </section>
-        </div>
-      </div>
-    </main>
-  );
-};
+        );
+    }
 
-export default ComparePage;
+    return (
+        <div className="min-h-screen gradient-bg">
+            <div className="container mx-auto px-4 py-12">
+                {/* Header */}
+                <motion.div
+                    initial={{ opacity: 0, y: -30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                    className="text-center mb-16"
+                >
+                    <motion.div
+                        className="flex items-center justify-center mb-6"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                    >
+                        <SparklesIcon className="w-12 h-12 text-primary mr-4" />
+                        <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent">
+                            Compare ZIP Files
+                        </h1>
+                    </motion.div>
+                    <motion.p 
+                        className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.4, duration: 0.6 }}
+                    >
+                        Upload two ZIP files to see a detailed comparison with visual diffs, 
+                        interactive file trees, and comprehensive change summaries.
+                    </motion.p>
+                </motion.div>
+
+                {/* Upload Section */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
+                    className="max-w-6xl mx-auto"
+                >
+                    <div className="card glass-effect p-8 md:p-12 relative overflow-hidden">
+                        {/* Background decoration */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-primary/5 to-transparent rounded-full blur-3xl" />
+                        <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-accent/5 to-transparent rounded-full blur-2xl" />
+                        
+                        <div className="relative z-10">
+                            {isLoading ? (
+                                <LoadingSpinner
+                                    message={zipLoading ? "Processing ZIP files..." : "Generating diff..."}
+                                    progress={progress}
+                                />
+                            ) : (
+                                <>
+                                    <motion.div 
+                                        className="grid grid-cols-1 lg:grid-cols-2 gap-8 xl:gap-12 mb-12"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.5, duration: 0.5 }}
+                                    >
+                                        <motion.div
+                                            whileHover={{ y: -5 }}
+                                            transition={{ type: "spring", stiffness: 300 }}
+                                        >
+                                            <FileUploadZone
+                                                label="First ZIP File"
+                                                onFileSelect={handleFileSelect('zip1')}
+                                                file={uploadedFiles.zip1}
+                                                disabled={isLoading}
+                                            />
+                                        </motion.div>
+                                        <motion.div
+                                            whileHover={{ y: -5 }}
+                                            transition={{ type: "spring", stiffness: 300 }}
+                                        >
+                                            <FileUploadZone
+                                                label="Second ZIP File"
+                                                onFileSelect={handleFileSelect('zip2')}
+                                                file={uploadedFiles.zip2}
+                                                disabled={isLoading}
+                                            />
+                                        </motion.div>
+                                    </motion.div>
+
+                                    <motion.div 
+                                        className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.7, duration: 0.5 }}
+                                    >
+                                        <motion.div
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                        >
+                                            <Button
+                                                onClick={handleCompare}
+                                                disabled={!canCompare}
+                                                size="lg"
+                                                className="btn-primary px-8 py-3 text-lg font-semibold shadow-xl"
+                                            >
+                                                <CompareIcon className="w-5 h-5 mr-2" />
+                                                Compare Files
+                                            </Button>
+                                        </motion.div>
+
+                                        {(uploadedFiles.zip1 || uploadedFiles.zip2) && (
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.8 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                            >
+                                                <Button
+                                                    onClick={handleReset}
+                                                    variant="outline"
+                                                    size="lg"
+                                                    className="btn-secondary px-6 py-3"
+                                                >
+                                                    <ArrowPathIcon className="w-5 h-5 mr-2" />
+                                                    Reset
+                                                </Button>
+                                            </motion.div>
+                                        )}
+                                    </motion.div>
+
+                                    <motion.div 
+                                        className="bg-accent/30 rounded-xl p-8 border border-accent-foreground/10"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.9, duration: 0.5 }}
+                                    >
+                                        <h3 className="font-bold text-lg text-foreground mb-6 flex items-center">
+                                            <SparklesIcon className="w-5 h-5 mr-2 text-primary" />
+                                            Powerful Features:
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                            {[
+                                                { title: "Visual Diff", desc: "Color-coded line-by-line comparisons" },
+                                                { title: "Binary Detection", desc: "Smart handling of binary files" },
+                                                { title: "Directory Trees", desc: "Interactive file structure analysis" },
+                                                { title: "Syntax Highlighting", desc: "Code-aware formatting" }
+                                            ].map((feature, index) => (
+                                                <motion.div
+                                                    key={feature.title}
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: 1 + index * 0.1, duration: 0.3 }}
+                                                    className="flex items-start space-x-3 p-3 rounded-lg hover:bg-background/50 transition-colors"
+                                                >
+                                                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
+                                                    <div>
+                                                        <p className="font-medium text-foreground text-sm mb-1">
+                                                            {feature.title}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {feature.desc}
+                                                        </p>
+                                                    </div>
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+        </div>
+    );
+}

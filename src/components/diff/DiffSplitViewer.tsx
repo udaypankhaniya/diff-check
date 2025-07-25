@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, oneLight } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { useTheme } from 'next-themes';
@@ -9,9 +9,14 @@ import {
   DocumentIcon, 
   ClipboardDocumentIcon,
   EyeIcon,
-  CodeBracketIcon 
+  CodeBracketIcon,
+  Squares2X2Icon,
+  ListBulletIcon,
+  BookmarkIcon,
+  ChevronUpDownIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useAppSelector } from '@/hooks/redux';
 import { useApp } from '@/context/AppContext';
@@ -105,8 +110,9 @@ const DiffSplitViewer: React.FC = () => {
   const leftPanelRef = useRef<HTMLDivElement>(null);
   const rightPanelRef = useRef<HTMLDivElement>(null);
   const [syncScroll, setSyncScroll] = useState(true);
+  const [viewMode, setViewMode] = useState<'split' | 'unified'>('unified');
 
-  const { result, selectedFile, viewMode } = useAppSelector((state) => state.diff);
+  const { result, selectedFile } = useAppSelector((state) => state.diff);
   const { showLineNumbers, wrapLines, highlightSyntax, fontSize } = useAppSelector(
     (state) => state.settings
   );
@@ -114,9 +120,19 @@ const DiffSplitViewer: React.FC = () => {
   const diff = selectedFile && result?.diffs[selectedFile] ? result.diffs[selectedFile] : null;
   const parsedDiff = diff ? parseDiff(diff) : [];
 
+  // Calculate diff stats for current file
+  const diffStats = parsedDiff.reduce(
+    (acc, line) => {
+      if (line.type === 'added') acc.additions++;
+      else if (line.type === 'removed') acc.deletions++;
+      return acc;
+    },
+    { additions: 0, deletions: 0 }
+  );
+
   // Synchronized scrolling
   useEffect(() => {
-    if (!syncScroll) return;
+    if (!syncScroll || viewMode !== 'split') return;
 
     const handleScroll = (source: HTMLDivElement, target: HTMLDivElement) => {
       return () => {
@@ -139,7 +155,7 @@ const DiffSplitViewer: React.FC = () => {
         rightPanel.removeEventListener('scroll', rightScrollHandler);
       };
     }
-  }, [syncScroll]);
+  }, [syncScroll, viewMode]);
 
   const copyToClipboard = async (content: string) => {
     try {
@@ -166,19 +182,26 @@ const DiffSplitViewer: React.FC = () => {
 
   if (!selectedFile || !diff) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+      <div className="flex-1 flex items-center justify-center bg-background">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center space-y-4"
+          className="text-center space-y-6 max-w-md"
         >
-          <DocumentIcon className="w-16 h-16 mx-auto text-slate-400 dark:text-slate-500" />
-          <div>
-            <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
+          <motion.div
+            animate={{ scale: [1, 1.05, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="relative"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-xl" />
+            <DocumentIcon className="relative w-20 h-20 mx-auto text-muted-foreground" />
+          </motion.div>
+          <div className="space-y-3">
+            <h3 className="text-xl font-semibold text-foreground">
               No file selected
             </h3>
-            <p className="text-slate-600 dark:text-slate-400">
-              Select a modified file from the sidebar to view its diff
+            <p className="text-muted-foreground leading-relaxed">
+              Choose a modified file from the sidebar to view its detailed diff comparison
             </p>
           </div>
         </motion.div>
@@ -190,164 +213,292 @@ const DiffSplitViewer: React.FC = () => {
 
   if (viewMode === 'unified') {
     return (
-      <div className="flex-1 flex flex-col bg-white dark:bg-slate-900">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-          <div className="flex items-center space-x-2">
-            <CodeBracketIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-            <span className="font-medium text-slate-900 dark:text-slate-100 truncate">
-              {selectedFile}
-            </span>
+      <div className="flex-1 flex flex-col bg-background">
+        {/* Modern Header with Glassmorphism */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-effect border-b sticky top-0 z-10"
+        >
+          <div className="flex items-center justify-between p-6">
+            <div className="flex items-center space-x-4">
+              <motion.div 
+                className="p-2 rounded-lg bg-primary/10"
+                whileHover={{ scale: 1.05 }}
+              >
+                <CodeBracketIcon className="w-5 h-5 text-primary" />
+              </motion.div>
+              <div>
+                <h3 className="font-semibold text-foreground truncate max-w-md">
+                  {selectedFile}
+                </h3>
+                <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-1">
+                  <span className="flex items-center space-x-1">
+                    <span className="w-2 h-2 bg-success rounded-full"></span>
+                    <span>+{diffStats.additions}</span>
+                  </span>
+                  <span className="flex items-center space-x-1">
+                    <span className="w-2 h-2 bg-destructive rounded-full"></span>
+                    <span>-{diffStats.deletions}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewMode('split')}
+                className="flex items-center gap-2"
+              >
+                <Squares2X2Icon className="w-4 h-4" />
+                Split View
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => copyToClipboard(diff)}
+                className="flex items-center gap-2"
+              >
+                <ClipboardDocumentIcon className="w-4 h-4" />
+                Copy
+              </Button>
+            </div>
           </div>
+        </motion.div>
+
+        {/* GitHub-style Unified Diff View */}
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-none">
+            {parsedDiff.map((line, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: idx * 0.001 }}
+                className={cn(
+                  'flex items-center border-b border-border/30 hover:bg-muted/30 transition-colors',
+                  // GitHub-style diff colors using exact specifications
+                  line.type === 'added' && 'bg-[hsl(var(--diff-added-bg))] border-l-4 border-[hsl(var(--diff-added-text))]',
+                  line.type === 'removed' && 'bg-[hsl(var(--diff-removed-bg))] border-l-4 border-[hsl(var(--diff-removed-text))]',
+                  line.type === 'context' && 'bg-muted/20'
+                )}
+              >
+                {/* Line Numbers */}
+                {showLineNumbers && (
+                  <>
+                    <div className="w-12 px-2 py-1 text-xs text-right text-muted-foreground bg-muted/20 border-r border-border/30 select-none">
+                      {line.oldLine || ''}
+                    </div>
+                    <div className="w-12 px-2 py-1 text-xs text-right text-muted-foreground bg-muted/20 border-r border-border/30 select-none">
+                      {line.newLine || ''}
+                    </div>
+                  </>
+                )}
+                
+                {/* Diff Marker */}
+                <div className="w-8 px-2 py-1 text-xs text-center font-mono select-none">
+                  {line.type === 'added' && (
+                    <span className="text-[hsl(var(--diff-added-text))] font-bold">+</span>
+                  )}
+                  {line.type === 'removed' && (
+                    <span className="text-[hsl(var(--diff-removed-text))] font-bold">-</span>
+                  )}
+                  {line.type === 'unchanged' && (
+                    <span className="text-muted-foreground/50"> </span>
+                  )}
+                </div>
+
+                {/* Content */}
+                <div
+                  className={cn(
+                    'flex-1 px-4 py-1 font-mono',
+                    fontSizeClasses[fontSize],
+                    line.type === 'added' && 'text-[hsl(var(--diff-added-text))]',
+                    line.type === 'removed' && 'text-[hsl(var(--diff-removed-text))]',
+                    line.type === 'context' && 'text-muted-foreground font-semibold',
+                    line.type === 'unchanged' && 'text-foreground/70',
+                    wrapLines ? 'whitespace-pre-wrap' : 'whitespace-pre'
+                  )}
+                >
+                  {line.content || ' '}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Enhanced Split view
+  return (
+    <div className="flex-1 flex flex-col bg-background">
+      {/* Modern Header */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-effect border-b sticky top-0 z-10"
+      >
+        <div className="flex items-center justify-between p-6">
+          <div className="flex items-center space-x-4">
+            <motion.div 
+              className="p-2 rounded-lg bg-primary/10"
+              whileHover={{ scale: 1.05 }}
+            >
+              <CodeBracketIcon className="w-5 h-5 text-primary" />
+            </motion.div>
+            <div>
+              <h3 className="font-semibold text-foreground truncate max-w-md">
+                {selectedFile}
+              </h3>
+              <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-1">
+                <span className="flex items-center space-x-1">
+                  <span className="w-2 h-2 bg-success rounded-full"></span>
+                  <span>+{diffStats.additions}</span>
+                </span>
+                <span className="flex items-center space-x-1">
+                  <span className="w-2 h-2 bg-destructive rounded-full"></span>
+                  <span>-{diffStats.deletions}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+          
           <div className="flex items-center space-x-2">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setSyncScroll(!syncScroll)}
-              className={cn(syncScroll && 'bg-blue-100 dark:bg-blue-900/50')}
+              onClick={() => setViewMode('unified')}
+              className="flex items-center gap-2"
             >
-              <EyeIcon className="w-4 h-4 mr-1" />
+              <ListBulletIcon className="w-4 h-4" />
+              Unified
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSyncScroll(!syncScroll)}
+              className={cn(
+                'flex items-center gap-2',
+                syncScroll && 'bg-primary/10 text-primary'
+              )}
+            >
+              <ChevronUpDownIcon className="w-4 h-4" />
               Sync Scroll
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => copyToClipboard(diff)}
+              className="flex items-center gap-2"
             >
-              <ClipboardDocumentIcon className="w-4 h-4 mr-1" />
+              <ClipboardDocumentIcon className="w-4 h-4" />
               Copy
             </Button>
           </div>
         </div>
-
-        {/* Unified Diff View */}
-        <div className="flex-1 overflow-auto font-mono">
-          {highlightSyntax ? (
-            <SyntaxHighlighter
-              language={language}
-              style={theme === 'dark' ? oneDark : oneLight}
-              showLineNumbers={showLineNumbers}
-              wrapLines={wrapLines}
-              className={cn('!m-0 !bg-transparent', fontSizeClasses[fontSize])}
-            >
-              {diff}
-            </SyntaxHighlighter>
-          ) : (
-            <pre className={cn('p-4 whitespace-pre-wrap', fontSizeClasses[fontSize])}>
-              {diff}
-            </pre>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Split view
-  return (
-    <div className="flex-1 flex flex-col bg-white dark:bg-slate-900">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-        <div className="flex items-center space-x-2">
-          <CodeBracketIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-          <span className="font-medium text-slate-900 dark:text-slate-100 truncate">
-            {selectedFile}
-          </span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSyncScroll(!syncScroll)}
-            className={cn(syncScroll && 'bg-blue-100 dark:bg-blue-900/50')}
-          >
-            <EyeIcon className="w-4 h-4 mr-1" />
-            Sync Scroll
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => copyToClipboard(diff)}
-          >
-            <ClipboardDocumentIcon className="w-4 h-4 mr-1" />
-            Copy
-          </Button>
-        </div>
-      </div>
+      </motion.div>
 
       {/* Split Diff View */}
       <div className="flex-1 flex">
         {/* Left Panel (Original) */}
-        <div className="flex-1 border-r border-slate-200 dark:border-slate-700">
-          <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-            Original
+        <div className="flex-1 border-r border-border">
+          <div className="glass-effect px-6 py-3 text-sm font-semibold text-muted-foreground border-b border-border">
+            <div className="flex items-center justify-between">
+              <span>Original</span>
+              <Badge variant="outline" className="text-xs">
+                Before
+              </Badge>
+            </div>
           </div>
           <div
             ref={leftPanelRef}
-            className={cn('overflow-auto h-full font-mono', fontSizeClasses[fontSize])}
+            className={cn(
+              'overflow-auto h-full font-mono bg-background',
+              fontSizeClasses[fontSize]
+            )}
           >
             {parsedDiff.map((line, idx) => (
-              <div
+              <motion.div
                 key={idx}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: idx * 0.001 }}
                 className={cn(
-                  'flex border-b border-slate-100 dark:border-slate-800',
-                  line.type === 'removed' && 'bg-red-50 dark:bg-red-950/30',
-                  line.type === 'context' && 'bg-blue-50 dark:bg-blue-950/30'
+                  'flex border-b border-border/20 hover:bg-muted/20 transition-colors',
+                  line.type === 'removed' && 'bg-[hsl(var(--diff-removed-bg))]',
+                  line.type === 'context' && 'bg-muted/10'
                 )}
               >
                 {showLineNumbers && (
-                  <div className="w-12 px-2 py-1 text-right text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700">
+                  <div className="w-12 px-2 py-1 text-xs text-right text-muted-foreground bg-muted/20 border-r border-border/30 select-none">
                     {line.oldLine || ''}
                   </div>
                 )}
                 <div
                   className={cn(
-                    'flex-1 px-3 py-1',
-                    line.type === 'removed' && 'text-red-800 dark:text-red-200',
-                    line.type === 'context' && 'text-blue-700 dark:text-blue-300 font-semibold',
+                    'flex-1 px-4 py-1',
+                    line.type === 'removed' && 'text-[hsl(var(--diff-removed-text))]',
+                    line.type === 'context' && 'text-muted-foreground font-semibold',
+                    line.type === 'unchanged' && 'text-foreground/70',
                     wrapLines ? 'whitespace-pre-wrap' : 'whitespace-pre'
                   )}
                 >
                   {line.type !== 'added' ? line.content || ' ' : ''}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
 
         {/* Right Panel (Modified) */}
         <div className="flex-1">
-          <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-            Modified
+          <div className="glass-effect px-6 py-3 text-sm font-semibold text-muted-foreground border-b border-border">
+            <div className="flex items-center justify-between">
+              <span>Modified</span>
+              <Badge variant="outline" className="text-xs">
+                After
+              </Badge>
+            </div>
           </div>
           <div
             ref={rightPanelRef}
-            className={cn('overflow-auto h-full font-mono', fontSizeClasses[fontSize])}
+            className={cn(
+              'overflow-auto h-full font-mono bg-background',
+              fontSizeClasses[fontSize]
+            )}
           >
             {parsedDiff.map((line, idx) => (
-              <div
+              <motion.div
                 key={idx}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: idx * 0.001 }}
                 className={cn(
-                  'flex border-b border-slate-100 dark:border-slate-800',
-                  line.type === 'added' && 'bg-green-50 dark:bg-green-950/30',
-                  line.type === 'context' && 'bg-blue-50 dark:bg-blue-950/30'
+                  'flex border-b border-border/20 hover:bg-muted/20 transition-colors',
+                  line.type === 'added' && 'bg-[hsl(var(--diff-added-bg))]',
+                  line.type === 'context' && 'bg-muted/10'
                 )}
               >
                 {showLineNumbers && (
-                  <div className="w-12 px-2 py-1 text-right text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700">
+                  <div className="w-12 px-2 py-1 text-xs text-right text-muted-foreground bg-muted/20 border-r border-border/30 select-none">
                     {line.newLine || ''}
                   </div>
                 )}
                 <div
                   className={cn(
-                    'flex-1 px-3 py-1',
-                    line.type === 'added' && 'text-green-800 dark:text-green-200',
-                    line.type === 'context' && 'text-blue-700 dark:text-blue-300 font-semibold',
+                    'flex-1 px-4 py-1',
+                    line.type === 'added' && 'text-[hsl(var(--diff-added-text))]',
+                    line.type === 'context' && 'text-muted-foreground font-semibold',
+                    line.type === 'unchanged' && 'text-foreground/70',
                     wrapLines ? 'whitespace-pre-wrap' : 'whitespace-pre'
                   )}
                 >
                   {line.type !== 'removed' ? line.content || ' ' : ''}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>

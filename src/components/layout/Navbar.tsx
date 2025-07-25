@@ -85,7 +85,8 @@ const Navbar: React.FC = () => {
             <nav className="flex items-center space-x-6">
               {[
                 { href: '/', label: 'Home' },
-                { href: '/app', label: 'Compare' },
+                { href: '/compare', label: 'ZIP Compare' },
+                { href: '/diff-history', label: 'History' },
                 { href: 'https://github.com/udaypankhaniya/diff-check', label: 'GitHub', external: true }
               ].map((link) => (
                 <motion.div key={link.href} whileHover={{ y: -2 }} whileTap={{ y: 0 }}>
@@ -212,7 +213,8 @@ const Navbar: React.FC = () => {
               <div className="py-4 space-y-2">
                 {[
                   { href: '/', label: 'Home' },
-                  { href: '/app', label: 'Compare' },
+                  { href: '/compare', label: 'ZIP Compare' },
+                  { href: '/diff-history', label: 'History' },
                   { href: 'https://github.com/udaypankhaniya/diff-check', label: 'GitHub', external: true }
                 ].map((link, index) => (
                   <motion.div

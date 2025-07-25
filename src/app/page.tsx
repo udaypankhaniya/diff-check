@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { 
   PlusIcon, 
   StarIcon, 
@@ -11,55 +11,19 @@ import {
   ArrowRightIcon,
   SparklesIcon,
   CpuChipIcon,
-  DevicePhoneMobileIcon
+  DevicePhoneMobileIcon,
+  CheckIcon,
+  DocumentMagnifyingGlassIcon,
+  ClockIcon,
+  ShieldCheckIcon
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import GitHubStats from "@/components/diff/GitHubStats";
 import { Button } from "@/components/ui/button";
-
-const features = [
-  {
-    icon: <CpuChipIcon className="w-8 h-8 text-primary" />,
-    title: "High Performance",
-    desc: "Optimized algorithms for fast processing of large ZIP files with real-time progress tracking.",
-  },
-  {
-    icon: <StarIcon className="w-8 h-8 text-warning" />,
-    title: "Live GitHub Stats",
-    desc: "See real-time stars, forks, and watchers. Join our growing community of developers.",
-  },
-  {
-    icon: <PlusIcon className="w-8 h-8 text-success" />,
-    title: "Modern ZIP Diff",
-    desc: "Upload two ZIPs, get a beautiful, color-coded diff with interactive file tree and unified view.",
-  },
-  {
-    icon: <ExclamationCircleIcon className="w-8 h-8 text-primary" />,
-    title: "Smart Detection",
-    desc: "Intelligent binary file detection with syntax highlighting for code files.",
-  },
-  {
-    icon: <DevicePhoneMobileIcon className="w-8 h-8 text-accent-foreground" />,
-    title: "Mobile-First Design",
-    desc: "Fully responsive, touch-friendly interface that works beautifully on any device size.",
-  },
-  {
-    icon: <CodeBracketIcon className="w-8 h-8 text-primary" />,
-    title: "Open Source",
-    desc: "MIT licensed, transparent, and community-driven. Contributions and feedback welcome!",
-  },
-];
-
-const stats = [
-  { value: "100%", label: "Client-Side", desc: "No data leaves your browser" },
-  { value: "0ms", label: "Server Latency", desc: "Everything runs locally" },
-  { value: "∞", label: "File Size", desc: "No upload size limits" },
-];
 
 export default function Home() {
   return (
     <div className="min-h-screen gradient-bg">
-      {/* Hero Section */}
+      {/* SEO-optimized Hero Section */}
       <section className="container mx-auto px-4 pt-20 pb-16 text-center relative overflow-hidden">
         {/* Background decorations */}
         <div className="absolute top-0 left-1/4 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse" />
@@ -83,7 +47,7 @@ export default function Home() {
               className="relative mr-4"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-accent/30 rounded-2xl blur-xl" />
-              <SparklesIcon className="relative w-16 h-16 text-primary" />
+              <DocumentMagnifyingGlassIcon className="relative w-16 h-16 text-primary" />
             </motion.div>
             <h1 className="text-5xl md:text-7xl font-extrabold">
               <span className="bg-gradient-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent">
@@ -92,35 +56,35 @@ export default function Home() {
             </h1>
           </motion.div>
           
-          <motion.p
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
             className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-8 leading-relaxed"
           >
-            Professional ZIP file comparison with beautiful visual diffs. 
+            Professional ZIP File Comparison Tool - Compare Files with Beautiful Visual Diffs
             <br className="hidden md:block" />
-            <span className="font-semibold text-foreground">Open source, privacy-focused, and built for developers.</span>
-          </motion.p>
+            <span className="font-semibold text-foreground">Free, Fast, and Privacy-Focused</span>
+          </motion.h2>
           
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.6 }}
-            className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12"
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"
           >
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Link href="/app">
+              <Link href="/compare">
                 <Button
                   size="xl"
                   variant="gradient"
                   className="shadow-2xl"
                 >
                   <SparklesIcon className="w-6 h-6" />
-                  Start Comparing
+                  Start Comparing Files
                   <ArrowRightIcon className="w-6 h-6" />
                 </Button>
               </Link>
@@ -136,119 +100,262 @@ export default function Home() {
               >
                 <Button
                   size="xl"
-                  variant="outline"
-                  className="glass-effect shadow-xl"
+                  variant="ghost"
+                  className="glass-effect shadow-lg"
                 >
                   <StarIcon className="w-6 h-6" />
-                  View Source
+                  Star on GitHub
                 </Button>
               </a>
             </motion.div>
           </motion.div>
 
-          {/* Stats */}
+          {/* Trust indicators */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.8 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto"
           >
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1 + index * 0.1, duration: 0.5 }}
-                className="text-center"
-              >
-                <div className="text-3xl md:text-4xl font-bold text-primary mb-2">
-                  {stat.value}
-                </div>
-                <div className="font-semibold text-foreground mb-1">
-                  {stat.label}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {stat.desc}
-                </div>
-              </motion.div>
-            ))}
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-primary mb-2">
+                100%
+              </div>
+              <div className="font-semibold text-foreground mb-1">
+                Client-Side Processing
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Your files never leave your browser
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-primary mb-2">
+                0ms
+              </div>
+              <div className="font-semibold text-foreground mb-1">
+                Server Latency
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Everything runs locally for maximum speed
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-primary mb-2">
+                Free
+              </div>
+              <div className="font-semibold text-foreground mb-1">
+                Forever
+              </div>
+              <div className="text-sm text-muted-foreground">
+                No limits, no subscriptions
+              </div>
+            </div>
           </motion.div>
         </motion.div>
       </section>
 
-      {/* GitHub Stats Section */}
-      <section className="container mx-auto px-4 mb-20">
+      {/* Main Features Section - SEO Optimized */}
+      <section className="container mx-auto px-4 py-24">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="max-w-5xl mx-auto"
+          className="max-w-6xl mx-auto"
         >
-          <GitHubStats />
-        </motion.div>
-      </section>
-
-      {/* Features Section */}
-      <section className="container mx-auto px-4 mb-24">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
-            Why Choose <span className="text-primary">Diff Check?</span>
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Built with modern web technologies and designed for professional developers who demand the best tools.
-          </p>
-        </motion.div>
-        
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto"
-        >
-          {features.map((feature, index) => (
+          <header className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+              Why Choose Diff Check for File Comparison?
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              Built with modern web technologies, Diff Check offers the most comprehensive ZIP file comparison experience available.
+            </p>
+          </header>
+          
+          <div className="space-y-24">
+            {/* Feature 1: ZIP File Comparison */}
             <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ 
-                scale: 1.05, 
-                y: -10,
-                transition: { type: "spring", stiffness: 400, damping: 17 }
-              }}
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
               viewport={{ once: true }}
-              className="card glass-effect p-8 text-center group relative overflow-hidden"
+              className="flex flex-col lg:flex-row items-center gap-12"
             >
-              {/* Background glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              
-              <motion.div 
-                className="relative z-10"
-                whileHover={{ scale: 1.1 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                <div className="mb-6 flex justify-center">
-                  <div className="p-3 rounded-xl bg-card border border-border/50 group-hover:border-primary/30 transition-colors">
-                    {feature.icon}
+              <div className="lg:w-1/2">
+                <div className="flex items-center mb-6">
+                  <div className="p-3 rounded-xl bg-primary/10 mr-4">
+                    <PlusIcon className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-3xl font-bold text-foreground">Advanced ZIP File Comparison</h3>
+                </div>
+                <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
+                  Upload two ZIP files and get instant, detailed comparisons with syntax highlighting, 
+                  line-by-line diffs, and intelligent binary file detection. Perfect for code reviews, 
+                  version comparisons, and project analysis.
+                </p>
+                <ul className="space-y-3">
+                  {[
+                    "Side-by-side and unified diff views",
+                    "Syntax highlighting for 50+ languages",
+                    "Smart binary file detection",
+                    "Interactive file tree navigation"
+                  ].map((feature, index) => (
+                    <li key={index} className="flex items-center text-muted-foreground">
+                      <CheckIcon className="w-5 h-5 text-primary mr-3 flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="lg:w-1/2">
+                <div className="glass-effect rounded-2xl p-8 border">
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-green-500/20 to-green-600/20 rounded-lg flex items-center justify-center">
+                        <PlusIcon className="w-6 h-6 text-green-500" />
+                      </div>
+                      <span className="text-green-600 font-mono text-sm">+ Added files</span>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-red-500/20 to-red-600/20 rounded-lg flex items-center justify-center">
+                        <span className="text-red-500 font-bold">−</span>
+                      </div>
+                      <span className="text-red-600 font-mono text-sm">− Removed files</span>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-blue-500/20 to-blue-600/20 rounded-lg flex items-center justify-center">
+                        <ExclamationCircleIcon className="w-6 h-6 text-blue-500" />
+                      </div>
+                      <span className="text-blue-600 font-mono text-sm">~ Modified files</span>
+                    </div>
                   </div>
                 </div>
-                <h3 className="text-xl font-bold text-foreground mb-4 group-hover:text-primary transition-colors">
-                  {feature.title}
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  {feature.desc}
-                </p>
-              </motion.div>
+              </div>
             </motion.div>
-          ))}
+
+            {/* Feature 2: Performance & Privacy */}
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="flex flex-col lg:flex-row-reverse items-center gap-12"
+            >
+              <div className="lg:w-1/2">
+                <div className="flex items-center mb-6">
+                  <div className="p-3 rounded-xl bg-accent/10 mr-4">
+                    <ShieldCheckIcon className="w-8 h-8 text-accent-foreground" />
+                  </div>
+                  <h3 className="text-3xl font-bold text-foreground">Privacy-First & High Performance</h3>
+                </div>
+                <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
+                  All processing happens directly in your browser - no files are uploaded to servers. 
+                  Enjoy blazing-fast comparisons with complete privacy and security for your sensitive code and data.
+                </p>
+                <ul className="space-y-3">
+                  {[
+                    "100% client-side processing",
+                    "No file size limitations",
+                    "Optimized algorithms for speed",
+                    "Works completely offline"
+                  ].map((feature, index) => (
+                    <li key={index} className="flex items-center text-muted-foreground">
+                      <CheckIcon className="w-5 h-5 text-accent-foreground mr-3 flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="lg:w-1/2">
+                <div className="glass-effect rounded-2xl p-8 border">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="text-center">
+                      <CpuChipIcon className="w-12 h-12 text-primary mx-auto mb-3" />
+                      <div className="text-2xl font-bold text-foreground">Fast</div>
+                      <div className="text-sm text-muted-foreground">Optimized Processing</div>
+                    </div>
+                    <div className="text-center">
+                      <ShieldCheckIcon className="w-12 h-12 text-primary mx-auto mb-3" />
+                      <div className="text-2xl font-bold text-foreground">Secure</div>
+                      <div className="text-sm text-muted-foreground">Client-Side Only</div>
+                    </div>
+                    <div className="text-center">
+                      <DevicePhoneMobileIcon className="w-12 h-12 text-primary mx-auto mb-3" />
+                      <div className="text-2xl font-bold text-foreground">Responsive</div>
+                      <div className="text-sm text-muted-foreground">Any Device</div>
+                    </div>
+                    <div className="text-center">
+                      <ClockIcon className="w-12 h-12 text-primary mx-auto mb-3" />
+                      <div className="text-2xl font-bold text-foreground">History</div>
+                      <div className="text-sm text-muted-foreground">Save Comparisons</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Feature 3: Developer-Focused */}
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="flex flex-col lg:flex-row items-center gap-12"
+            >
+              <div className="lg:w-1/2">
+                <div className="flex items-center mb-6">
+                  <div className="p-3 rounded-xl bg-primary/10 mr-4">
+                    <CodeBracketIcon className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-3xl font-bold text-foreground">Built for Developers</h3>
+                </div>
+                <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
+                  From code reviews to deployment comparisons, Diff Check understands your workflow. 
+                  Advanced features like history management, export options, and mobile-responsive design 
+                  make it the perfect tool for modern development teams.
+                </p>
+                <ul className="space-y-3">
+                  {[
+                    "Comprehensive comparison history",
+                    "Export results in multiple formats",
+                    "Mobile-first responsive design",
+                    "Open source and customizable"
+                  ].map((feature, index) => (
+                    <li key={index} className="flex items-center text-muted-foreground">
+                      <CheckIcon className="w-5 h-5 text-primary mr-3 flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="lg:w-1/2">
+                <div className="glass-effect rounded-2xl p-8 border">
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Supported Languages</span>
+                      <span className="text-primary font-semibold">50+</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {["JavaScript", "TypeScript", "Python", "Java", "C++", "Go", "Rust", "PHP", "Ruby"].map((lang) => (
+                        <span key={lang} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+                          {lang}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="pt-4 border-t border-border">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-muted-foreground">Processing Speed</span>
+                        <span className="text-green-500 font-semibold">Ultra Fast</span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div className="bg-gradient-to-r from-primary to-accent h-2 rounded-full w-[95%]"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         </motion.div>
       </section>
 
@@ -275,11 +382,11 @@ export default function Home() {
           </motion.div>
           
           <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
-            Ready to Compare Your Files?
+            Start Comparing Your ZIP Files Today
           </h2>
           <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
             Join thousands of developers who trust Diff Check for their file comparison needs. 
-            Start comparing files in seconds, completely free.
+            Fast, secure, and completely free - no registration required.
           </p>
           
           <motion.div
@@ -293,14 +400,14 @@ export default function Home() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Link href="/app">
+              <Link href="/compare">
                 <Button
                   size="xl"
                   variant="gradient"
                   className="shadow-2xl"
                 >
                   <SparklesIcon className="w-6 h-6" />
-                  Get Started Now
+                  Compare Files Now
                   <ArrowRightIcon className="w-6 h-6" />
                 </Button>
               </Link>
@@ -321,7 +428,7 @@ export default function Home() {
                   className="glass-effect"
                 >
                   <StarIcon className="w-6 h-6" />
-                  Star on GitHub
+                  View Source Code
                 </Button>
               </a>
             </motion.div>

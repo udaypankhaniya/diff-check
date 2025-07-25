@@ -19,7 +19,7 @@ interface Toast {
 }
 
 type AppAction =
-  | { type: 'ADD_TOAST'; payload: Omit<Toast, 'id'> }
+  | { type: 'ADD_TOAST'; payload: Toast }
   | { type: 'REMOVE_TOAST'; payload: string }
   | { type: 'TOGGLE_MODAL'; payload: { modal: keyof AppState['modals']; open?: boolean } }
   | { type: 'SET_GLOBAL_LOADING'; payload: boolean };
@@ -38,13 +38,7 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     case 'ADD_TOAST':
       return {
         ...state,
-        toasts: [
-          ...state.toasts,
-          {
-            ...action.payload,
-            id: Math.random().toString(36).substr(2, 9),
-          },
-        ],
+        toasts: [...state.toasts, action.payload],
       };
     case 'REMOVE_TOAST':
       return {
@@ -83,7 +77,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const addToast = (toast: Omit<Toast, 'id'>) => {
     const id = Math.random().toString(36).substr(2, 9);
-    dispatch({ type: 'ADD_TOAST', payload: { ...toast } });
+    dispatch({ type: 'ADD_TOAST', payload: { ...toast, id } });
 
     // Auto-remove toast after duration
     const duration = toast.duration || 5000;

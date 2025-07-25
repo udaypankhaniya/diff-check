@@ -31,7 +31,6 @@ const Navbar: React.FC = () => {
   const themeOptions = [
     { value: 'light', label: 'Light', icon: SunIcon },
     { value: 'dark', label: 'Dark', icon: MoonIcon },
-    { value: 'system', label: 'System', icon: ComputerDesktopIcon },
   ];
 
   const nextTheme = () => {

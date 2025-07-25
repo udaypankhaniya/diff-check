@@ -2,15 +2,16 @@
 import { Inter } from "next/font/google";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import React from 'react';
-import { Provider } from 'react-redux';
-import { ThemeProvider } from 'next-themes';
-import { store } from '@/store';
-import { AppProvider } from '@/context/AppContext';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-import ToastContainer from '@/components/ui/toast';
-import SettingsModal from '@/components/modals/SettingsModal';
+import React from "react";
+import { Provider } from "react-redux";
+import { ThemeProvider } from "next-themes";
+import { store } from "@/store";
+import { AppProvider } from "@/context/AppContext";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import ToastContainer from "@/components/ui/toast";
+import SettingsModal from "@/components/modals/SettingsModal";
+import GoogleAnalytics from '@/components/GoogleAnalytics';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,31 +23,53 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <title>Diff Check - Professional ZIP File Comparison Tool | Free & Privacy-Focused</title>
+        <title>
+          Diff Check - Professional ZIP File Comparison Tool | Free &
+          Privacy-Focused
+        </title>
         <meta
           name="description"
           content="Compare ZIP files instantly with beautiful visual diffs. Professional tool for developers featuring syntax highlighting, file tree navigation, and complete privacy. 100% client-side processing."
         />
-        <meta name="keywords" content="zip file comparison, diff tool, file compare, visual diff, code comparison, developer tools, open source, privacy-focused, client-side processing" />
+        <meta
+          name="keywords"
+          content="zip file comparison, diff tool, file compare, visual diff, code comparison, developer tools, open source, privacy-focused, client-side processing"
+        />
         <meta name="author" content="Diff Check" />
         <meta name="robots" content="index, follow" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="Diff Check - Professional ZIP File Comparison Tool" />
-        <meta property="og:description" content="Compare ZIP files instantly with beautiful visual diffs. Professional tool for developers featuring syntax highlighting and complete privacy." />
-        <meta property="og:url" content="https://diffcheck.com" />
+        <meta
+          property="og:title"
+          content="Diff Check - Professional ZIP File Comparison Tool"
+        />
+        <meta
+          property="og:description"
+          content="Compare ZIP files instantly with beautiful visual diffs. Professional tool for developers featuring syntax highlighting and complete privacy."
+        />
+        <meta property="og:url" content="https://diff-check-xi.vercel.app" />
         <meta property="og:site_name" content="Diff Check" />
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Diff Check - Professional ZIP File Comparison Tool" />
-        <meta name="twitter:description" content="Compare ZIP files instantly with beautiful visual diffs. Professional tool for developers featuring syntax highlighting and complete privacy." />
+        <meta
+          name="twitter:title"
+          content="Diff Check - Professional ZIP File Comparison Tool"
+        />
+        <meta
+          name="twitter:description"
+          content="Compare ZIP files instantly with beautiful visual diffs. Professional tool for developers featuring syntax highlighting and complete privacy."
+        />
 
         {/* Additional SEO */}
         <meta name="theme-color" content="#6366f1" />
@@ -56,8 +79,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
         {/* Canonical URL */}
-        <link rel="canonical" href="https://diffcheck.com" />
-
+        <link rel="canonical" href="https://diff-check-xi.vercel.app" />
+ <GoogleAnalytics />
         {/* JSON-LD Structured Data */}
         <script
           type="application/ld+json"
@@ -65,35 +88,38 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
-              "name": "Diff Check",
-              "description": "Professional ZIP file comparison tool with visual diffs, syntax highlighting, and complete privacy protection",
-              "url": "https://diffcheck.com",
-              "applicationCategory": "DeveloperApplication",
-              "operatingSystem": "Any",
-              "offers": {
+              name: "Diff Check",
+              description:
+                "Professional ZIP file comparison tool with visual diffs, syntax highlighting, and complete privacy protection",
+              url: "https://diff-check-xi.vercel.app",
+              applicationCategory: "DeveloperApplication",
+              operatingSystem: "Any",
+              offers: {
                 "@type": "Offer",
-                "price": "0",
-                "priceCurrency": "USD"
+                price: "0",
+                priceCurrency: "USD",
               },
-              "author": {
+              author: {
                 "@type": "Organization",
-                "name": "Diff Check"
+                name: "Diff Check",
               },
-              "featureList": [
+              featureList: [
                 "ZIP file comparison",
                 "Visual diff viewer",
                 "Syntax highlighting",
                 "File tree navigation",
                 "Privacy-focused processing",
-                "Mobile responsive design"
-              ]
-            })
+                "Mobile responsive design",
+              ],
+            }),
           }}
         />
 
         <link rel="icon" href="/favicon.ico" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         <Provider store={store}>
           <ThemeProvider
             attribute="class"
